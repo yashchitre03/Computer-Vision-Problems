@@ -9,75 +9,115 @@ def main():
     lenaPath = str(path / 'lena.png')
     artPath = str(path / 'art.png')
     
+    # create path for saving images
+    lenaPath_mean = str(path / 'lena_mean.png')
+    lenaPath_gauss = str(path / 'lena_gauss.png')
+    lenaPath_sharpen = str(path / 'lena_sharpen.png')
+    artPath_con_mean = str(path / 'art_con_mean.png')
+    artPath_corr_mean = str(path / 'art_corr_mean.png')
+    artPath_median = str(path / 'art_median.png')
+    
     # read images
-    lenaImg = cv.imread(lenaPath)
-    artImg = cv.imread(artPath)
+    lenaImg_og = cv.imread(lenaPath)
+    lenaSize = lenaImg_og.shape
+    artImg_og = cv.imread(artPath)
+    artSize = artImg_og.shape
     
     # check whether images are read correctly
-    cv.imshow('art', lenaImg)
-    cv.imshow('lena', artImg)
+    cv.imshow('art', lenaImg_og)
+    cv.imshow('lena', artImg_og)
     cv.waitKey(0)
     cv.destroyAllWindows()
     
-    # get input to try different kernel sizes
-    kernelSize = int(input('Enter kernel size: (preferably odd value) '))
+    # get user input to try different kernel sizes
+    filterSize = int(input('Enter kernel size: (preferably odd value) '))
     
-    # generate all kernels according to given size
-    meanKernel = getKernel('mean', kernelSize)
-    gaussianKernel = getKernel('gaussian', kernelSize, 1)
-    sharpenKernel = getKernel('sharpen', kernelSize)
+    # add padding to the input images to preserve size
+    sidePadding = (filterSize - 1) // 2
+    padding = (sidePadding, sidePadding)
+    lenaImg = np.pad(lenaImg_og, (padding, padding, (0, 0)), 'constant')
+    artImg = np.pad(artImg_og, (padding, padding, (0, 0)), 'constant')
     
-    convolution(lenaImg, meanKernel)
+    # get mean and gaussian filters
+    meanFilter = getMeanKernel(filterSize)
+    gaussFilter = getGaussianKernel(filterSize)
     
-    convolution(lenaImg, gaussianKernel)
+    # apply filters to the 'lena.png' image
+    op = applyConvolution(lenaImg, lenaSize, meanFilter)
+    cv.imwrite(lenaPath_mean, op)
+    op = applyConvolution(lenaImg, lenaSize, gaussFilter)
+    cv.imwrite(lenaPath_gauss, op)
+    op = applySharpenKernel(lenaImg_og, lenaImg, meanFilter)
+    cv.imwrite(lenaPath_sharpen, op)
     
-    convolution(lenaImg, sharpenKernel)
+    # apply filters to the 'art.png' image
+    op = applyConvolution(artImg, artSize, meanFilter)
+    cv.imwrite(artPath_con_mean, op)
+    op = applyCorrelation(artImg, artSize, meanFilter)
+    cv.imwrite(artPath_corr_mean, op)
+    # op = applyMedianKernel(artImg, filterSize)
+    # cv.imwrite(artPath_median, op)
     
-    convolution(artImg, meanKernel)
     
-    correlation(artImg, meanKernel)
-    
-    medianFilter(artImg, kernelSize)
-    
-    
-def getKernel(name, size, sigma=-1):
-    if name == 'mean':
-        kernel = np.ones((size, size))
-        kernel *= 1/(size**2)
-    elif name == 'gaussian':
-        s = 2 * sigma**2
-        denom = 1 / (np.pi * s)
-        kernel = np.full((size, size), denom)
-        
-        x = np.arange(-(size//2), size//2+1)
-        y = np.arange(-(size//2), size//2+1)
-        xx, yy = np.meshgrid(y, x)
-        kernel *= np.exp(-(xx**2 + yy**2) / s)
-        print(kernel)
-        
-        """
-        old way to compute gaussian kernel
-        for x in range(size):
-            for y in range(size):
-                kernel[x, y] *= np.exp(-((x-size//2)**2 + (y-size//2)**2) / s)
-        """
 
-    elif name == 'sharpen':
-        pass
-    global a
-    a = kernel
+def getMeanKernel(size):
+    kernel = np.ones((size, size))
+    kernel *= 1/(size**2)
     return kernel
     
+
+def getGaussianKernel(size, sigma=1):
+    s = 2 * sigma**2
+    denom = 1 / (np.pi * s)
+    kernel = np.full((size, size), denom)
     
-def convolution(ip, kernel):
-    pass
+    x = np.arange(-(size//2), size//2+1)
+    y = np.arange(-(size//2), size//2+1)
+    xx, yy = np.meshgrid(y, x)
+    
+    kernel *= np.exp(-(xx**2 + yy**2) / s)
+    return kernel
 
 
-def correlation(ip, kernel):
-    pass
+def applyConvolution(ip, ipShape, kernel):
+    kernel = np.flip(kernel)
+    opImg = np.empty(ipShape)
+    
+    for color in range(3):
+        for x in range(ipShape[0]):
+            for y in range(ipShape[1]):
+                dx = x + kernel.shape[0]
+                dy = y + kernel.shape[1]
+                opImg[x, y, color] = np.sum(ip[x:dx, y:dy, color] * kernel)
+                
+    return opImg
 
 
-def medianFilter(ip, size):
+def applyCorrelation(ip, ipShape, kernel):
+    opImg = np.empty(ipShape)
+    
+    for color in range(3):
+        for x in range(ipShape[0]):
+            for y in range(ipShape[1]):
+                dx = x + kernel.shape[0]
+                dy = y + kernel.shape[1]
+                opImg[x, y, color] = np.sum(ip[x:dx, y:dy, color] * kernel)
+                
+    return opImg
+
+
+def applySharpenKernel(ip_og, ip, blurrKernel, alpha=1):
+    blurred = applyConvolution(ip, ip_og.shape, blurrKernel)
+    cv.imwrite('testx.png', blurred)
+    cv.imwrite('testip.png', ip_og)
+    
+    op = (ip_og * (alpha + 1)) - (blurred * alpha)
+    print(op)
+    l=4
+    return op
+
+
+def applyMedianKernel(ip, size):
     pass
     
     
