@@ -32,7 +32,7 @@ def main():
     cv.destroyAllWindows()
     
     # get user input to try different kernel sizes
-    filterSize = int(input('Enter kernel size: (preferably odd value) '))
+    filterSize = int(input('Enter kernel size: (odd value) '))
     
     # add padding to the input images to preserve size
     sidePadding = (filterSize - 1) // 2
@@ -68,16 +68,16 @@ def getMeanKernel(size):
     return kernel
 
 
-def getGaussianKernel(size, sigma=1):
+def getGaussianKernel(size, sigma=11):
     s = 2 * sigma**2
     denom = 1 / (np.pi * s)
     kernel = np.full((size, size), denom)
+
+    x, y = np.mgrid[-(size//2): size//2+1, -(size//2): size//2+1]
+    kernel *= np.exp(-(x**2 + y**2) / s)
     
-    x = np.arange(-(size//2), size//2+1)
-    y = np.arange(-(size//2), size//2+1)
-    xx, yy = np.meshgrid(y, x)
+    kernel /= np.abs(kernel).sum()
     
-    kernel *= np.exp(-(xx**2 + yy**2) / s)
     return kernel
 
 
@@ -85,7 +85,7 @@ def getSharpenKernel(size):
     alpha = np.zeros((size, size))
     alpha[size//2, size//2] = 2
     
-    meanFilter = getGaussianKernel(size)
+    meanFilter = getMeanKernel(size)
     
     kernel = alpha -  meanFilter
     return kernel
