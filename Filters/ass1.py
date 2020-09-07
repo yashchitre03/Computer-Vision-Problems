@@ -53,7 +53,7 @@ def main():
     op = applyConvolution(lenaImg, lenaSize, sharpenFilter)
     cv.imwrite(lenaPath_sharpen, op)
     
-    # apply filters to the 'art.png' image
+    # # apply filters to the 'art.png' image
     op = applyConvolution(artImg, artSize, meanFilter)
     cv.imwrite(artPath_con_mean, op)
     op = applyCorrelation(artImg, artSize, meanFilter)
@@ -67,7 +67,6 @@ def getMeanKernel(size):
     kernel *= 1/(size**2)
     return kernel
 
-
 def getGaussianKernel(size, sigma=11):
     s = 2 * sigma**2
     denom = 1 / (np.pi * s)
@@ -80,33 +79,18 @@ def getGaussianKernel(size, sigma=11):
     
     return kernel
 
-
-def getSharpenKernel(size):
-    alpha = np.zeros((size, size))
-    alpha[size//2, size//2] = 2
+def getSharpenKernel(size, alpha=1):
+    center = np.zeros((size, size))
+    center[size//2, size//2] = alpha + 1
     
     meanFilter = getMeanKernel(size)
     
-    kernel = alpha -  meanFilter
+    kernel = center -  alpha * meanFilter
     return kernel
-
 
 def applyConvolution(ip, ipShape, kernel):
     kernel = np.flip(kernel)
-    opImg = np.empty(ipShape, 'uint8')
-    
-    for color in range(3):
-        for x in range(ipShape[0]):
-            for y in range(ipShape[1]):
-                dx = x + kernel.shape[0]
-                dy = y + kernel.shape[1]
-                opImg[x, y, color] = np.sum(ip[x:dx, y:dy, color] * kernel)
-
-    return opImg
-
-
-def applyCorrelation(ip, ipShape, kernel):
-    opImg = np.empty(ipShape, 'uint8')
+    opImg = np.empty(ipShape)
     
     for color in range(3):
         for x in range(ipShape[0]):
@@ -115,11 +99,25 @@ def applyCorrelation(ip, ipShape, kernel):
                 dy = y + kernel.shape[1]
                 opImg[x, y, color] = np.sum(ip[x:dx, y:dy, color] * kernel)
                 
+    opImg = clip(opImg)
     return opImg
 
 
+def applyCorrelation(ip, ipShape, kernel):
+    opImg = np.empty(ipShape)
+    
+    for color in range(3):
+        for x in range(ipShape[0]):
+            for y in range(ipShape[1]):
+                dx = x + kernel.shape[0]
+                dy = y + kernel.shape[1]
+                opImg[x, y, color] = np.sum(ip[x:dx, y:dy, color] * kernel)
+              
+    opImg = clip(opImg)
+    return opImg
+
 def applyMedianKernel(ip, ipShape, size):
-    opImg = np.empty(ipShape, 'uint8')
+    opImg = np.empty(ipShape)
     
     for color in range(3):
         for x in range(ipShape[0]):
@@ -127,9 +125,14 @@ def applyMedianKernel(ip, ipShape, size):
                 dx = x + size
                 dy = y + size
                 opImg[x, y, color] = np.median(ip[x:dx, y:dy, color])
-                
-    return opImg
     
+    opImg = clip(opImg)               
+    return opImg  
+
+def clip(ip):
+    np.clip(ip, 0, 255, ip)
+    ip = ip.astype('uint8')   
+    return ip
     
 if __name__ == '__main__':
     main()
