@@ -4,6 +4,13 @@ import cv2 as cv
 
 
 def main():
+    '''
+    Preprocesses the input and calls the required functions for filters
+
+    Returns:
+        None.
+
+    '''
     # add paths to the input images
     path = Path.cwd() / 'res'
     inputRes = path / 'input'
@@ -63,11 +70,32 @@ def main():
     
     
 def getMeanKernel(size):
+    '''
+    generates the mean kernel/filter with a given size
+
+    Args:
+        size (int): size of kernel.
+
+    Returns:
+        kernel (numpy array): mean kernel.
+
+    '''
     kernel = np.ones((size, size))
     kernel *= 1/(size**2)
     return kernel
 
 def getGaussianKernel(size, sigma=1):
+    '''
+    generates the gaussian kernel/filter with a given size
+
+    Args:
+        size (int): size of kernel.
+        sigma (int, optional): parameter for gaussian curve. Defaults to 1.
+
+    Returns:
+        kernel (numpy array): gaussian kernel.
+
+    '''
     s = 2 * sigma**2
     denom = 1 / (np.pi * s)
     kernel = np.full((size, size), denom)
@@ -79,7 +107,18 @@ def getGaussianKernel(size, sigma=1):
     
     return kernel
 
-def getSharpenKernel(size, alpha=5):
+def getSharpenKernel(size, alpha=3):
+    '''
+    generates the sharpening kernel given a size
+
+    Args:
+        size (int): size of kernel.
+        alpha (int, optional): parameter for amount of sharpening. Defaults to 3.
+
+    Returns:
+        kernel (numpy array): sharpening kernel.
+
+    '''
     center = np.zeros((size, size))
     center[size//2, size//2] = alpha + 1
     
@@ -89,13 +128,49 @@ def getSharpenKernel(size, alpha=5):
     return kernel
 
 def convolution(ip, ipShape, kernel):
+    '''
+    flips the kernel and calls applyKernel()
+
+    Args:
+        ip (numpy array): input image.
+        ipShape (tuple): input array shape.
+        kernel (numpy array): image filter.
+
+    Returns:
+        TYPE: output image.
+
+    '''
     kernel = np.flip(kernel)
     return applyKernel(ip, ipShape, kernel)
 
 def correlation(ip, ipShape, kernel):
+    '''
+    calls applyKernel
+
+    Args:
+        ip (numpy array): input image.
+        ipShape (tuple): input array shape.
+        kernel (numpy array): image filter.
+
+    Returns:
+        TYPE: output image.
+
+    '''
     return applyKernel(ip, ipShape, kernel)
 
 def applyKernel(ip, ipShape, kernel):
+    '''
+    applies the kernel on the image
+
+    Args:
+        ip (numpy array): input image.
+        ipShape (tuple): input array shape.
+        kernel (numpy array): image filter.
+
+    Returns:
+        opImg (numpy array): output image.
+
+    '''
     opImg = np.empty(ipShape)
     for color in range(3):
         for x in range(ipShape[0]):
@@ -108,6 +183,18 @@ def applyKernel(ip, ipShape, kernel):
     return opImg
 
 def applyMedianKernel(ip, ipShape, size):
+    '''
+    applies median kernel on the input image
+
+    Args:
+        ip (numpy array): input image.
+        ipShape (tuple): input image shape.
+        size (int): kernel size.
+
+    Returns:
+        opImg (numpy array): output image.
+
+    '''
     opImg = np.empty(ipShape)
     for color in range(3):
         for x in range(ipShape[0]):
@@ -120,6 +207,16 @@ def applyMedianKernel(ip, ipShape, size):
     return opImg  
 
 def clip(ip):
+    '''
+    clips the output image values between 0 and 255
+
+    Args:
+        ip (numpy array): input image.
+
+    Returns:
+        ip (numpy array): clipped image.
+
+    '''
     np.clip(ip, 0, 255, ip)
     ip = ip.astype('uint8')   
     return ip
