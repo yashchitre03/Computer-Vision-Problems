@@ -27,9 +27,10 @@ def main():
     artPath_median = str(outputRes / 'art_median.png')
     
     # read images
-    lenaImg = cv.imread(lenaPath)
+    lenaImg = cv.imread(lenaPath, -1)
     lenaSize = lenaImg.shape
-    artImg = cv.imread(artPath)
+    artImg = cv.imread(artPath, -1)
+    artImg = np.expand_dims(artImg, axis=2)
     artSize = artImg.shape
     
     # check whether images are read correctly
@@ -172,7 +173,7 @@ def applyKernel(ip, ipShape, kernel):
 
     '''
     opImg = np.empty(ipShape)
-    for color in range(3):
+    for color in range(ipShape[2]):
         for x in range(ipShape[0]):
             for y in range(ipShape[1]):
                 dx = x + kernel.shape[0]
@@ -196,7 +197,7 @@ def applyMedianKernel(ip, ipShape, size):
 
     '''
     opImg = np.empty(ipShape)
-    for color in range(3):
+    for color in range(ipShape[2]):
         for x in range(ipShape[0]):
             for y in range(ipShape[1]):
                 dx = x + size
