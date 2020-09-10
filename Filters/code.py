@@ -34,8 +34,8 @@ def main():
     artSize = artImg.shape
     
     # check whether images are read correctly
-    cv.imshow('art', lenaImg)
-    cv.imshow('lena', artImg)
+    cv.imshow('lena', lenaImg)
+    cv.imshow('art', artImg)
     cv.waitKey(0)
     cv.destroyAllWindows()
     
