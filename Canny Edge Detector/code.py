@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import cv2 as cv
+import matplotlib.pyplot as plt
 
 
 def main():
@@ -19,16 +20,18 @@ def main():
     testSize = testImg.shape
     
     # check whether images are read correctly
-    cv.imshow('lena', lenaImg)
-    cv.imshow('test', testImg)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    plt.imshow(lenaImg, cmap='gray')
+    plt.title("lena")
+    plt.show()
+    plt.imshow(testImg, cmap='gray')
+    plt.title("test")
+    plt.show()
     
     S = gaussianSmoothing(lenaImg)
     
-    cv.imshow('smoothed', S)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
+    plt.imshow(S, cmap='gray')
+    plt.title("Smoothed")
+    plt.show()
     
     mag, theta = imageGradient(S)
     
@@ -60,17 +63,7 @@ def convolution(ip, kernel):
             dy = y + kernel.shape[1]
             op[x, y] = np.sum(paddedIp[x:dx, y:dy] * kernel)
               
-    return normalize(op)
-
-def normalize(arr):
-    smallest = arr.min()
-    largest = arr.max()
-    for x in range(arr.shape[0]):
-        for y in range(arr.shape[1]):
-            arr[x, y] = 255 * ((arr[x, y] - smallest) / (largest - smallest))
-    
-    arr = arr.astype('uint8')
-    return arr
+    return op
 
 def gaussianSmoothing(ip, size=3, sigma=1.5):
     s = 2 * sigma**2
@@ -89,18 +82,24 @@ def imageGradient(ip):
     hor_grad = convolution(ip, sobel)
     ver_grad = convolution(ip, sobel.T)
     
+    plt.imshow(hor_grad, cmap='gray')
+    plt.title("hor")
+    plt.show()
+    plt.imshow(ver_grad, cmap='gray')
+    plt.title("ver")
+    plt.show()
+
     magnitude = np.sqrt(np.square(hor_grad) + np.square(ver_grad))
-    magnitude = normalize(magnitude)
+    magnitude *= 255 / magnitude.max()  
     theta = np.arctan2(ver_grad, hor_grad)
-    theta = normalize(theta)
-    
-    cv.imshow('hor', hor_grad)
-    cv.imshow('ver', ver_grad)
-    cv.imshow('mag', magnitude)
-    cv.imshow('theta', theta)
-    cv.waitKey(0)
-    cv.destroyAllWindows()
-    
+      
+    plt.imshow(magnitude, cmap='gray')
+    plt.title("mag")
+    plt.show()
+    plt.imshow(theta)
+    plt.title("theta")
+    plt.show()
+
     return magnitude, theta
 
 if __name__ == '__main__':
