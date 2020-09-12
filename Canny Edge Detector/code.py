@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+from numpy import pi as PI
 import cv2 as cv
 import matplotlib.pyplot as plt
 
@@ -27,13 +28,20 @@ def main():
     plt.title("test")
     plt.show()
     
-    S = gaussianSmoothing(lenaImg)
-    
+    # 1. Gaussian Smoothing
+    S = gaussianSmoothing(testImg)
     plt.imshow(S, cmap='gray')
     plt.title("Smoothed")
     plt.show()
     
+    # 2. Calculating image gradient
     mag, theta = imageGradient(S)
+    
+    # 3. Suppressing Nonmaxima
+    mag = nonMaximaSuppress(mag, theta)
+    plt.imshow(mag, cmap='gray')
+    plt.title("suppressed Mag")
+    plt.show()
     
 
 def convolution(ip, kernel):
@@ -65,6 +73,7 @@ def convolution(ip, kernel):
               
     return op
 
+
 def gaussianSmoothing(ip, size=3, sigma=1.5):
     s = 2 * sigma**2
     denom = 1 / (np.pi * s)
@@ -75,6 +84,7 @@ def gaussianSmoothing(ip, size=3, sigma=1.5):
     kernel /= np.abs(kernel).sum()
     
     return convolution(ip, kernel)
+
 
 def imageGradient(ip):
     sobel = np.array([[1, 0, -1], [2, 0, -2], [1, 0, -1]])
@@ -90,7 +100,7 @@ def imageGradient(ip):
     plt.show()
 
     magnitude = np.sqrt(np.square(hor_grad) + np.square(ver_grad))
-    magnitude *= 255 / magnitude.max()  
+    magnitude *= 255 / magnitude.max()
     theta = np.arctan2(ver_grad, hor_grad)
       
     plt.imshow(magnitude, cmap='gray')
@@ -101,6 +111,37 @@ def imageGradient(ip):
     plt.show()
 
     return magnitude, theta
+
+
+def nonMaximaSuppress(mag, theta):
+    suppressedMag = np.zeros(mag.shape)
+    h, w = theta.shape[0], theta.shape[1]
+    
+    for x in range(h):
+        for y in range(w):
+            angle = theta[x, y]
+            
+            if (PI/8 < angle <= 3*PI/8) or (-5*PI/8 <= angle < -7*PI/8):
+                firstNeigh = mag[x+1, y-1] if (x < h-1 and y > 0) else 0
+                secondNeigh = mag[x-1, y+1] if (x > 0 and y < w-1) else 0
+                
+            elif (3*PI/8 < angle <= 5*PI/8) or (-3*PI/8 <= angle < -5*PI/8):
+                firstNeigh = mag[x-1, y] if (x > 0) else 0
+                secondNeigh = mag[x+1, y] if (x < h-1) else 0
+                
+            elif (5*PI/8 < angle <= 7*PI/8) or (-PI/8 <= angle < -3*PI/8):
+                firstNeigh = mag[x-1, y-1] if (x > 0 and y > 0) else 0
+                secondNeigh = mag[x+1, y+1] if (x < h-1 and y < w-1) else 0
+                
+            else:
+                firstNeigh = mag[x, y-1] if (y > 0) else 0
+                secondNeigh = mag[x, y+1] if (y < w-1) else 0
+                
+            if mag[x, y] >= firstNeigh and mag[x, y] >= secondNeigh:
+                suppressedMag[x, y] = mag[x, y]
+                
+    return suppressedMag
+
 
 if __name__ == '__main__':
     main()
