@@ -43,6 +43,13 @@ def main():
     plt.title("suppressed Mag")
     plt.show()
     
+    # 4. Thresholding and Edge Linking
+    mag = hysteresisThreshold(mag)
+    plt.imshow(mag, cmap='gray')
+    plt.title("Hysteresis Thresholding")
+    plt.show()
+    E = edgeLinking(mag)
+    
 
 def convolution(ip, kernel):
     '''
@@ -141,6 +148,18 @@ def nonMaximaSuppress(mag, theta):
                 suppressedMag[x, y] = mag[x, y]
                 
     return suppressedMag
+
+
+def hysteresisThreshold(mag, low=50, high=100, weak=128, strong=255):
+    op = np.zeros(mag.shape)
+    op[(mag >= low) & (mag <= high)] = weak
+    op[mag > high] = strong
+    
+    return op
+
+
+def edgeLinking(mag):
+    pass
 
 
 if __name__ == '__main__':
