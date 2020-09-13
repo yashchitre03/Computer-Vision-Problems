@@ -29,7 +29,7 @@ def main():
     plt.show()
     
     # 1. Gaussian Smoothing
-    S = gaussianSmoothing(testImg)
+    S = gaussianSmoothing(lenaImg)
     plt.imshow(S, cmap='gray')
     plt.title("Smoothed")
     plt.show()
@@ -49,6 +49,9 @@ def main():
     plt.title("Hysteresis Thresholding")
     plt.show()
     E = edgeLinking(mag)
+    plt.imshow(E, cmap='gray')
+    plt.title("Edge Linking")
+    plt.show()
     
 
 def convolution(ip, kernel):
@@ -150,7 +153,7 @@ def nonMaximaSuppress(mag, theta):
     return suppressedMag
 
 
-def hysteresisThreshold(mag, low=50, high=100, weak=128, strong=255):
+def hysteresisThreshold(mag, low=12, high=25, weak=128, strong=255):
     op = np.zeros(mag.shape)
     op[(mag >= low) & (mag <= high)] = weak
     op[mag > high] = strong
@@ -159,7 +162,27 @@ def hysteresisThreshold(mag, low=50, high=100, weak=128, strong=255):
 
 
 def edgeLinking(mag):
-    pass
+    for x in range(1, mag.shape[0]-1):
+        for y in range(1, mag.shape[1]-1):
+            if mag[x, y] == 255:
+                convertNeighbors(mag, x, y)
+            
+    mag[mag != 255] = 0
+    return mag
+
+
+def convertNeighbors(arr, x, y):
+    if arr[x-1, y] > 0:
+        arr[x-1, y] = 255
+        
+    if arr[x+1, y] > 0:
+        arr[x+1, y] = 255
+        
+    if arr[x, y-1] > 0:
+        arr[x, y-1] = 255
+        
+    if arr[x, y+1] > 0:
+        arr[x, y+1] = 255
 
 
 if __name__ == '__main__':
