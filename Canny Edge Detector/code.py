@@ -52,7 +52,7 @@ def main():
     plt.imshow(E, cmap='gray')
     plt.title("Edge Linking")
     plt.show()
-    
+    sdfsd =1
 
 def convolution(ip, kernel):
     '''
@@ -84,7 +84,7 @@ def convolution(ip, kernel):
     return op
 
 
-def gaussianSmoothing(ip, size=3, sigma=1.5):
+def gaussianSmoothing(ip, size=3, sigma=2):
     s = 2 * sigma**2
     denom = 1 / (np.pi * s)
     kernel = np.full((size, size), denom)
@@ -153,7 +153,7 @@ def nonMaximaSuppress(mag, theta):
     return suppressedMag
 
 
-def hysteresisThreshold(mag, low=12, high=25, weak=128, strong=255):
+def hysteresisThreshold(mag, low=10, high=20, weak=128, strong=255):
     op = np.zeros(mag.shape)
     op[(mag >= low) & (mag <= high)] = weak
     op[mag > high] = strong
@@ -172,18 +172,13 @@ def edgeLinking(mag):
 
 
 def convertNeighbors(arr, x, y):
-    if arr[x-1, y] > 0:
-        arr[x-1, y] = 255
-        
-    if arr[x+1, y] > 0:
-        arr[x+1, y] = 255
-        
-    if arr[x, y-1] > 0:
-        arr[x, y-1] = 255
-        
-    if arr[x, y+1] > 0:
-        arr[x, y+1] = 255
+    for rShift, cShift in moves:
+        if 0 < arr[x+rShift, y+cShift] < 255:
+            arr[x+rShift, y+cShift] = 255
+            convertNeighbors(arr, x+rShift, y+cShift)
 
 
 if __name__ == '__main__':
+    moves = [(-1, 0), (1, 0), (0, -1), (0, 1), 
+             (-1, -1), (1, 1), (-1, 1), (1, -1)]
     main()
