@@ -29,14 +29,14 @@ def main():
     plt.show()
     
     # 1. Gaussian Smoothing
-    S = gaussianSmoothing(lenaImg)
+    S = gaussianSmoothing(testImg)
     plt.imshow(S, cmap='gray')
     plt.title("Smoothed")
     plt.show()
     
     # 2. Calculating image gradient
     mag, theta = imageGradient(S)
-    
+        
     # 3. Suppressing Nonmaxima
     mag = nonMaximaSuppress(mag, theta)
     plt.imshow(mag, cmap='gray')
@@ -52,7 +52,7 @@ def main():
     plt.imshow(E, cmap='gray')
     plt.title("Edge Linking")
     plt.show()
-    sdfsd =1
+
 
 def convolution(ip, kernel):
     '''
@@ -84,7 +84,7 @@ def convolution(ip, kernel):
     return op
 
 
-def gaussianSmoothing(ip, size=3, sigma=2):
+def gaussianSmoothing(ip, size=7, sigma=2):
     s = 2 * sigma**2
     denom = 1 / (np.pi * s)
     kernel = np.full((size, size), denom)
@@ -153,7 +153,7 @@ def nonMaximaSuppress(mag, theta):
     return suppressedMag
 
 
-def hysteresisThreshold(mag, low=10, high=20, weak=128, strong=255):
+def hysteresisThreshold(mag, low=5, high=10, weak=128, strong=255):
     op = np.zeros(mag.shape)
     op[(mag >= low) & (mag <= high)] = weak
     op[mag > high] = strong

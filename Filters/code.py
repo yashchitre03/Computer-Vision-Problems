@@ -14,7 +14,7 @@ def main():
     # add paths to the input images
     path = Path.cwd() / 'res'
     inputRes = path / 'input'
-    outputRes = path / 'output'
+    outputRes = path / 'BFOutput'
     lenaPath = str(inputRes / 'lena.png')
     artPath = str(inputRes / 'art.png')
     
