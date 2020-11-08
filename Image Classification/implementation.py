@@ -6,6 +6,7 @@ from matplotlib import pyplot as plt
 from sklearn.cluster import KMeans
 from sklearn.metrics import pairwise_distances_argmin
 import heapq
+import seaborn as sns
 
 
 # class Image:
@@ -102,7 +103,7 @@ for i in range(0, 500, 200):
     visualize_features(train_images[i], train_keypoints[i], train_labels[i])
         
 # k-means
-n_clusters = 100
+n_clusters = 250
 kmeans = KMeans(n_clusters=n_clusters).fit(np.concatenate(train_descriptors))
 
 # visualize the dictionary
@@ -131,9 +132,10 @@ std = np.std(train_histograms, axis=0)
 train_histograms = train_histograms / std
 
 # read the validation data
-val_true_labels, val_pred_labels = [], []
+val_true_labels, val_pred_labels, labels = [], [], []
 for folder in glob(str(val_path)):
     true_label = folder.split(os.sep)[-1]
+    labels.append(true_label)
     for file in glob(folder + '/*.jpg'):
         image = cv.imread(file, -1)
         _, des = sift.detectAndCompute(image, None)
@@ -144,16 +146,36 @@ for folder in glob(str(val_path)):
         
         knn = get_knn(train_histograms=train_histograms,
                       train_labels=train_labels,
-                      val_histogram=histogram, k=7)
+                      val_histogram=histogram, k=10)
         pred_label = max(set(knn), key=knn.count)
         
         val_true_labels.append(true_label)
         val_pred_labels.append(pred_label)
 
-c = 0
-for i, j in zip(val_pred_labels, val_true_labels):
-    if i != j: c += 1
-print(c)
+acc = 0
+confusion_matrix = np.zeros((10, 10), dtype=np.int16)
+for pred, true in zip(val_pred_labels, val_true_labels):
+    if pred == true:
+        acc += 1
+    confusion_matrix[labels.index(pred), labels.index(true)] += 1
+    
+acc = acc * 100 / len(val_pred_labels)
+confusion_matrix = confusion_matrix / confusion_matrix.sum(axis=1,keepdims=1)
+print('Accuracy: ', acc)
+
+sns.set(color_codes=True)
+plt.figure(figsize=(20, 20))
+plt.title("Confusion Matrix")
+
+sns.set(font_scale=2)
+ax = sns.heatmap(confusion_matrix, annot=True, 
+                     cmap="YlGnBu", cbar_kws={'label': 'Scale'})
+ax.set_xticklabels(labels)
+ax.set_yticklabels(labels)
+ax.set(xlabel="True Label", ylabel="Predicted Label")
+plt.show()
+
+
 
 
 
